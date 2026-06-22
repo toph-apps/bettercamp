@@ -26,7 +26,7 @@ data/       SQLite database with camping catalog (included)
 
 ```bash
 # Clone the repo
-git clone <your-repo-url>
+git clone https://github.com/toph-apps/bettercamp.git
 cd bettercamp
 
 # Install Python dependencies
