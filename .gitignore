@@ -14,11 +14,11 @@ dist/
 *.tsbuildinfo
 
 # Local data
-*.db
 *.db-journal
 *.db-wal
 *.db-shm
-data/
+data/*
+!data/catalog.db
 osrm/extract/
 osrm/cache/
 scraper/cache/

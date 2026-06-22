@@ -1,95 +1,95 @@
 # bettercamp
 
-Third-party search UI over Sépaq's camping reservation catalog. Bookings still go through sepaq.com — this is a search-and-discovery layer.
+Better search UI for Sépaq's camping reservations in Quebec. Browse campsites by location, amenities, and driving distance. Bookings still go through sepaq.com — this is a search-and-discovery layer.
 
 See [`docs/superpowers/specs/2026-06-21-bettercamp-design.md`](docs/superpowers/specs/2026-06-21-bettercamp-design.md) for the full design.
 
-## Layout
+## Project Structure
 
 ```
-api/        FastAPI app
-scraper/    Weekly sepaq + Overpass crawler
-web/        Vite + React + TypeScript + MapLibre
+api/        FastAPI backend (Python)
+scraper/    Weekly Sépaq + Overpass crawler
+web/        Vite + React + TypeScript + MapLibre frontend
 osrm/       Self-hosted OSRM (Docker) for driving distance
-docs/       Design specs
+docs/       Design specs & architecture
+data/       SQLite database with camping catalog (included)
 ```
 
-## Quick start (Bazzite DX / Fedora Atomic)
+## Prerequisites
 
-Bazzite DX ships Docker + Podman + Distrobox. Two paths:
+- **Python 3.12+** (install [`uv`](https://docs.astral.sh/uv/getting-started/installation/))
+- **Node.js 18+** and npm
+- **Docker** (for OSRM routing service)
+- **Git**
 
-### Direct on host (Bazzite ships docker, python, node)
+## Setup
 
 ```bash
-# one-time
-curl -LsSf https://astral.sh/uv/install.sh | sh    # Python toolchain
-# node + npm are already on Bazzite DX
+# Clone the repo
+git clone <your-repo-url>
+cd bettercamp
 
-# install deps
+# Install Python dependencies
 uv sync --all-packages
-( cd web && npm install )
 
-# run
-make dev
+# Install frontend dependencies
+cd web && npm install && cd ..
 ```
 
-`pnpm` works too but its v11 build-script gating is annoying with esbuild;
-the project is tested against npm.
+## Running
 
-OSRM always runs in Docker (its build chain is heavy):
+### Quick start (basic search, no driving distance)
 
 ```bash
-make osrm-build   # one-time, downloads ~700 MB Quebec OSM extract
-make osrm-up
+make dev
+# Opens http://localhost:5173 with API on :8000
+# Database has 35 establishments, 141 sectors, 2,575 sites; search works immediately
 ```
 
-## Make targets
+### With driving distance (requires Docker)
 
-| Target | What |
+```bash
+# Build OSRM routing (one-time, ~15 min)
+make osrm-build
+
+# Start OSRM service
+make osrm-up
+
+# In another terminal
+make dev
+# Now `/api/search` includes driving distance from Montreal
+```
+
+Stop OSRM with `make osrm-down`.
+
+## What's Included
+
+- **Pre-populated database** (`data/catalog.db`, ~5 MB) with 35 establishments, 141 sectors, and 2,575 campsites
+- **Full API** with `/api/establishments`, `/api/search`, and `/api/health/scrape`
+- **Frontend** with interactive map and amenity search filters
+- **Scraper** to update the database from Sépaq and Overpass (optional)
+
+## Available Commands
+
+| Command | Purpose |
 |---|---|
-| `make dev` | Run API on :8000 + web on :5173 |
-| `make scrape` | Run the weekly scraper once |
-| `make osrm-build` | Download Quebec PBF and prebuild OSRM graph |
-| `make osrm-up` | Start OSRM service on :5000 |
-| `make osrm-down` | Stop OSRM |
+| `make dev` | Run API (:8000) + web (:5173) with hot reload |
 | `make test` | Run pytest + vitest |
-| `make build` | Production build of web |
+| `make build` | Production build of frontend (outputs to `web/dist`) |
+| `make scrape` | Update database by scraping Sépaq |
+| `make osrm-build` | Download Quebec OSM data and build OSRM graph (~15 min, 700 MB) |
+| `make osrm-up` | Start OSRM routing service on :5000 |
+| `make osrm-down` | Stop OSRM |
 
 ## Status
 
-Skeleton is functional end-to-end. Walkthrough:
+End-to-end functional. Known limitations:
 
-```bash
-uv sync --all-packages
-( cd web && npm install )
-
-# 1. Scrape two real establishments (~35 s incl. Nominatim throttle)
-BETTERCAMP_DB=$PWD/data/catalog.db uv run --package bettercamp-scraper \
-  python -m sepaq --only camping-des-voltigeurs --only reserve-faunique-mastigouche \
-  --no-sites --no-water
-
-# 2. Start API + web
-make dev
-# → http://localhost:5173  (proxies /api → :8000)
-```
-
-Verified working:
-
-- `/api/establishments` returns rows with lat/lon (Nominatim-geocoded fallback)
-- `/api/search` returns sector list with structured amenity bundle
-- `/api/health/scrape` surfaces last run status + counts
-- Single-camp establishments get a synthetic `__main` sector
-- Frontend builds (94 modules, 76 kB CSS + 1 MB JS)
-- 6 pytest cases pass
-
-Known gaps (next morning's punch list):
-
-| Gap | Why | Fix |
+| What's Missing | Why | To Fix |
 |---|---|---|
-| Amenity icons all `false`/`unknown` | Sector-page selectors (`.services`, `.amenities`, `.caracteristiques`) didn't match real HTML | Curl a sector page, inspect actual icon DOM, update `scraper/sepaq/sector.py:_extract_amenity_labels` |
-| Region always null | Sépaq doesn't expose region on establishment page | Hard-code region mapping by slug, or scrape from the `/destinations/` page |
-| Drive time always null in API | OSRM container not built | `make osrm-build` (~15 min one-time) then `make osrm-up` |
-| Waterfront score always 0 | Need to re-scrape without `--no-water` | Drop the flag; first run takes ~20 min on full catalog due to Overpass throttle |
-| Sector centroids inherit establishment centroid | Nominatim doesn't resolve sub-names like "Lac-Bouteille" reliably | Manual override in admin UI (M6) or scrape Sépaq's sector-map PNG bounding box |
+| Amenity icons | Sépaq HTML selectors don't match | Update scraper selectors in `scraper/sepaq/sector.py` |
+| Region field | Sépaq doesn't expose it | Hard-code region mapping by campsite slug |
+| Driving distance | Requires OSRM | Run `make osrm-build && make osrm-up` |
+| Waterfront score | Disabled to speed up scraping | Re-run scraper without `--no-water` flag |
 
-See `docs/superpowers/specs/2026-06-21-bettercamp-design.md` for the full design and roadmap (M0–M6).
+See [`docs/superpowers/specs/2026-06-21-bettercamp-design.md`](docs/superpowers/specs/2026-06-21-bettercamp-design.md) for roadmap (M0–M6).
