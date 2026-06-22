@@ -1,7 +1,9 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import Map from "../components/Map";
 import { useTypedSearchParams } from "../hooks/useSearchParams";
+import { aggregateByEstablishment } from "../lib/aggregate";
 
 export default function MapView() {
   const [params] = useTypedSearchParams();
@@ -9,6 +11,10 @@ export default function MapView() {
     queryKey: ["search", params],
     queryFn: () => api.search(params),
   });
+  const establishments = useMemo(
+    () => aggregateByEstablishment(data ?? []),
+    [data],
+  );
 
   if (error)
     return (
@@ -18,7 +24,7 @@ export default function MapView() {
     );
   return (
     <div className="relative h-full">
-      <Map sectors={data ?? []} />
+      <Map establishments={establishments} />
       {isLoading && (
         <div className="absolute left-2 top-2 rounded bg-white/90 px-2 py-1 text-xs shadow">
           loading…
@@ -26,7 +32,7 @@ export default function MapView() {
       )}
       {data && (
         <div className="absolute right-2 top-2 rounded bg-white/90 px-2 py-1 text-xs shadow">
-          {data.length} sectors
+          {establishments.length} establishments · {data.length} sectors
         </div>
       )}
     </div>
