@@ -6,26 +6,26 @@ See [`docs/superpowers/specs/2026-06-21-bettercamp-design.md`](docs/superpowers/
 
 ## Quickest Start (Automated)
 
+**👉 See [SETUP.md](SETUP.md) for detailed instructions with terminal/PowerShell walkthrough.**
+
+One-liner:
+
 **macOS / Linux:**
 ```bash
-git clone https://github.com/toph-apps/bettercamp.git
-cd bettercamp
-./install.sh   # Installs dependencies, then prompts to start
+git clone https://github.com/toph-apps/bettercamp.git && cd bettercamp && ./install.sh
 ```
 
 **Windows:**
 ```powershell
-git clone https://github.com/toph-apps/bettercamp.git
-cd bettercamp
-powershell -ExecutionPolicy Bypass -File install.ps1
+git clone https://github.com/toph-apps/bettercamp.git; cd bettercamp; powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
 The installers will:
 - Detect and install missing tools (uv, Node.js, Docker)
 - Install Python + frontend dependencies
-- Offer to start the dev server
+- Start the dev server and open the app in your browser
 
-After installation, use `./run.sh` (macOS/Linux) or `.\run.ps1` (Windows) to start the app.
+After installation, use `./run.sh` (macOS/Linux) or `.\run.ps1` (Windows) to start again.
 
 ---
 
