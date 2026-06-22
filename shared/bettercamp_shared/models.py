@@ -33,9 +33,16 @@ class Site(SQLModel, table=True):
     id: str = Field(primary_key=True)
     sector_id: str = Field(foreign_key="sector.id", index=True)
     number: str
+    name: str | None = None  # full site name e.g. "Lac-Bouteille 1"
+    subtitle: str | None = None  # e.g. "Rustic campsite"
     url: str | None = None
     amenities_json: str = "{}"
-    waterfront: bool | None = None  # NULL = unknown
+    photos_json: str = "[]"  # list of absolute image URLs
+    services_json: str = "[]"  # raw service bullet strings
+    description_json: str = "[]"  # raw description bullet strings
+    access: str | None = None  # e.g. "Accessible via footpath: 0-100 m"
+    price_text: str | None = None  # e.g. "Starting at $23.95/night"
+    waterfront: bool | None = None  # derived from description text
     notes: str | None = None
     scraped_at: datetime | None = None
 

@@ -133,6 +133,7 @@ async def crawl(
                                 site_link.number,
                                 site_link.url,
                                 detail,
+                                fallback_name=getattr(site_link, "name", None),
                             )
                             counts["sites"] += 1
                         session.commit()

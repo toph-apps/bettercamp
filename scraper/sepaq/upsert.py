@@ -17,12 +17,22 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _abs(u: str | None) -> str | None:
+    if not u:
+        return u
+    if u.startswith("//"):
+        return "https:" + u
+    if u.startswith("/"):
+        return "https://www.sepaq.com" + u
+    return u
+
+
 def upsert_establishment(session: Session, data: EstablishmentData) -> None:
     row = session.get(Establishment, data.link.id)
     if row is None:
         row = Establishment(id=data.link.id, name=data.link.name, url=data.link.url)
     row.name = data.link.name
-    row.url = data.link.url
+    row.url = _abs(data.link.url) or row.url
     row.region = data.region or row.region
     if data.lat:
         row.lat = data.lat
@@ -48,7 +58,7 @@ def upsert_sector(
         )
     row.establishment_id = establishment_id
     row.name = data.name
-    row.url = data.url
+    row.url = _abs(data.url) or row.url
     if data.lat:
         row.lat = data.lat
     if data.lon:
@@ -71,15 +81,31 @@ def upsert_site(
     number: str,
     url: str | None,
     detail: SiteData | None = None,
+    fallback_name: str | None = None,
 ) -> None:
+    import json as _json
+
     row = session.get(Site, site_link_id)
     if row is None:
         row = Site(id=site_link_id, sector_id=sector_id, number=number, url=url)
     row.sector_id = sector_id
     row.number = number
-    row.url = url or row.url
+    row.url = _abs(url) or row.url
+    if fallback_name and not row.name:
+        row.name = fallback_name
     if detail:
+        if detail.name:
+            row.name = detail.name
+        if detail.subtitle:
+            row.subtitle = detail.subtitle
         row.amenities_json = detail.amenities.model_dump_json()
+        row.photos_json = _json.dumps(detail.photos)
+        row.services_json = _json.dumps(detail.services)
+        row.description_json = _json.dumps(detail.description)
+        row.access = detail.access
+        row.price_text = detail.price_text
+        if detail.waterfront is not None:
+            row.waterfront = detail.waterfront
     row.scraped_at = _now()
     session.merge(row)
 

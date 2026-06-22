@@ -47,14 +47,22 @@ export default function SectorTooltip({ s }: { s: SectorSearchResult }) {
         )}
       </dl>
       {chips.length > 0 && <div className="mt-2 text-lg">{chips.join(" ")}</div>}
-      <a
-        href={s.url}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-2 block text-xs text-blue-600 hover:underline"
-      >
-        Book on Sépaq ↗
-      </a>
+      <div className="mt-2 flex justify-between text-xs">
+        <a
+          href={`/sector/${s.sector_id}`}
+          className="text-blue-700 hover:underline"
+        >
+          See sites →
+        </a>
+        <a
+          href={s.url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          View on Sépaq ↗
+        </a>
+      </div>
     </div>
   );
 }

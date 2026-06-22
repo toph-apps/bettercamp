@@ -1,4 +1,4 @@
-from sepaq.icons import amenities_from_labels
+from sepaq.icons import amenities_from_bullets
 from sepaq.seed import parse_seed
 
 
@@ -17,14 +17,23 @@ def test_seed_extracts_links():
     assert {(l.id, l.name) for l in links} == {("foo", "Foo Park"), ("bar", "Bar Park")}
 
 
-def test_icons_normalise():
-    am = amenities_from_labels([
+def test_bullets_normalise():
+    am, water = amenities_from_bullets([
         "Drinking water",
-        "Fire pit",
+        "Fire pit location restricts setup",
         "Vault toilet",
-        "Pets allowed",
+        "Dogs are allowed on the site",
     ])
     assert am.drinking_water is True
     assert am.fire_pit is True
     assert am.pets is True
     assert am.toilets.value == "vault"
+    assert water is None
+
+
+def test_bullets_detect_waterfront():
+    _, water = amenities_from_bullets([
+        "Fire pit",
+        "View of a lake or river",
+    ])
+    assert water is True
