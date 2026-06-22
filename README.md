@@ -57,4 +57,39 @@ make osrm-up
 
 ## Status
 
-M0 skeleton in progress. See spec for roadmap (M0–M6).
+Skeleton is functional end-to-end. Walkthrough:
+
+```bash
+uv sync --all-packages
+( cd web && npm install )
+
+# 1. Scrape two real establishments (~35 s incl. Nominatim throttle)
+BETTERCAMP_DB=$PWD/data/catalog.db uv run --package bettercamp-scraper \
+  python -m sepaq --only camping-des-voltigeurs --only reserve-faunique-mastigouche \
+  --no-sites --no-water
+
+# 2. Start API + web
+make dev
+# → http://localhost:5173  (proxies /api → :8000)
+```
+
+Verified working:
+
+- `/api/establishments` returns rows with lat/lon (Nominatim-geocoded fallback)
+- `/api/search` returns sector list with structured amenity bundle
+- `/api/health/scrape` surfaces last run status + counts
+- Single-camp establishments get a synthetic `__main` sector
+- Frontend builds (94 modules, 76 kB CSS + 1 MB JS)
+- 6 pytest cases pass
+
+Known gaps (next morning's punch list):
+
+| Gap | Why | Fix |
+|---|---|---|
+| Amenity icons all `false`/`unknown` | Sector-page selectors (`.services`, `.amenities`, `.caracteristiques`) didn't match real HTML | Curl a sector page, inspect actual icon DOM, update `scraper/sepaq/sector.py:_extract_amenity_labels` |
+| Region always null | Sépaq doesn't expose region on establishment page | Hard-code region mapping by slug, or scrape from the `/destinations/` page |
+| Drive time always null in API | OSRM container not built | `make osrm-build` (~15 min one-time) then `make osrm-up` |
+| Waterfront score always 0 | Need to re-scrape without `--no-water` | Drop the flag; first run takes ~20 min on full catalog due to Overpass throttle |
+| Sector centroids inherit establishment centroid | Nominatim doesn't resolve sub-names like "Lac-Bouteille" reliably | Manual override in admin UI (M6) or scrape Sépaq's sector-map PNG bounding box |
+
+See `docs/superpowers/specs/2026-06-21-bettercamp-design.md` for the full design and roadmap (M0–M6).

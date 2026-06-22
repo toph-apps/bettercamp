@@ -34,6 +34,7 @@ async def crawl(
     limit: int | None,
     with_sites: bool,
     with_water: bool,
+    with_geocode: bool = True,
     only: list[str] | None = None,
 ) -> dict:
     counts = {"establishments": 0, "sectors": 0, "sites": 0, "errors": []}
@@ -59,7 +60,7 @@ async def crawl(
                     counts["errors"].append({"step": "establishment", "id": elink.id, "err": str(exc)})
                     continue
 
-                if not edata.lat and with_water:
+                if not edata.lat and with_geocode:
                     coords = await enrich_mod.geocode_nominatim(geo_c, f"{elink.name}, Quebec")
                     await asyncio.sleep(NOMINATIM_DELAY_S)
                     if coords:
@@ -70,7 +71,19 @@ async def crawl(
                     session.commit()
                 counts["establishments"] += 1
 
-                for slink in edata.sectors:
+                # Single-camp establishments expose sites directly on the
+                # establishment page with no sector layer. Synthesize one
+                # sector so the catalog has a row to attach amenities/sites
+                # to and so search returns the campground.
+                sector_links = edata.sectors
+                if not sector_links:
+                    from .establishment import SectorLink as _SL
+
+                    sector_links = [
+                        _SL(id=f"{elink.id}__main", name=elink.name, url=elink.url)
+                    ]
+
+                for slink in sector_links:
                     try:
                         sdata = await fetch_sector(c, slink.id, slink.name, slink.url)
                     except Exception as exc:
@@ -80,12 +93,19 @@ async def crawl(
                         )
                         continue
 
-                    if not sdata.lat and with_water:
+                    if not sdata.lat and with_geocode:
+                        # Sector centroid: geocode by "<sector>, <establishment>, Quebec"
+                        # so e.g. "Lac-Bouteille, Réserve faunique Mastigouche, Quebec"
+                        # resolves; the bare sector name is too ambiguous.
                         coords = await enrich_mod.geocode_nominatim(
-                            geo_c, f"{sdata.name}, Quebec"
+                            geo_c, f"{sdata.name}, {edata.link.name}, Quebec"
                         )
                         await asyncio.sleep(NOMINATIM_DELAY_S)
-                        if coords:
+                        if not coords and edata.lat and edata.lon:
+                            # fallback: inherit establishment centroid so map
+                            # at least shows the sector at a sane location
+                            sdata.lat, sdata.lon = edata.lat, edata.lon
+                        elif coords:
                             sdata.lat, sdata.lon = coords
 
                     water = None
@@ -145,6 +165,7 @@ def main() -> int:
     p.add_argument("--only", action="append", help="restrict to establishment slug (repeatable)")
     p.add_argument("--no-sites", action="store_true", help="skip per-site detail pages")
     p.add_argument("--no-water", action="store_true", help="skip Overpass water enrichment")
+    p.add_argument("--no-geocode", action="store_true", help="skip Nominatim geocoding")
     args = p.parse_args()
 
     init_db()
@@ -155,6 +176,7 @@ def main() -> int:
                 limit=args.limit,
                 with_sites=not args.no_sites,
                 with_water=not args.no_water,
+                with_geocode=not args.no_geocode,
                 only=args.only,
             )
         )
