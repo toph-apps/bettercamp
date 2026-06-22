@@ -17,10 +17,22 @@ from dataclasses import dataclass
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-OVERPASS = "https://overpass-api.de/api/interpreter"
+# Public Overpass mirrors. We round-robin across them — the main de mirror
+# rate-limits aggressively (returns 406 to anonymous clients) so falling
+# back to kumi/lz4 keeps the crawl from stalling. Override with
+# BETTERCAMP_OVERPASS=https://… if you self-host.
+import os
+
+OVERPASS_MIRRORS = [
+    os.environ.get("BETTERCAMP_OVERPASS")
+    or "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://lz4.overpass-api.de/api/interpreter",
+]
 NOMINATIM = "https://nominatim.openstreetmap.org/search"
 RADIUS_M = 500
 NOMINATIM_UA = "bettercamp/0.1 (+personal use; kersef@gmail.com)"
+OVERPASS_UA = NOMINATIM_UA
 
 
 async def geocode_nominatim(
@@ -72,9 +84,25 @@ out tags center;
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30), reraise=True)
 async def _query_overpass(c: httpx.AsyncClient, lat: float, lon: float) -> dict:
     q = _QUERY.format(r=RADIUS_M, lat=lat, lon=lon)
-    r = await c.post(OVERPASS, data={"data": q})
-    r.raise_for_status()
-    return r.json()
+    headers = {
+        "User-Agent": OVERPASS_UA,
+        "Accept": "application/json",
+    }
+    last_exc: Exception | None = None
+    for url in OVERPASS_MIRRORS:
+        try:
+            r = await c.post(url, data={"data": q}, headers=headers)
+            if r.status_code in (406, 429):
+                last_exc = httpx.HTTPStatusError(
+                    f"{url} -> {r.status_code}", request=r.request, response=r
+                )
+                continue
+            r.raise_for_status()
+            return r.json()
+        except httpx.HTTPError as exc:
+            last_exc = exc
+            continue
+    raise last_exc or RuntimeError("all overpass mirrors failed")
 
 
 async def enrich_waterfront(
