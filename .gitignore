@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Local data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/
+osrm/extract/
+osrm/cache/
+scraper/cache/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Env
+.env
+.env.local

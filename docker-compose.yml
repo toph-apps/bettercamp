@@ -1,0 +1,13 @@
+services:
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1
+    container_name: bettercamp-osrm
+    command: osrm-routed --algorithm mld /data/quebec-latest.osrm
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm/extract:/data
+    restart: unless-stopped
+
+  # api and web are run via `make dev` outside docker during development.
+  # Production compose-up support is M6+.

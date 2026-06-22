@@ -1,0 +1,18 @@
+[project]
+name = "bettercamp"
+version = "0.1.0"
+description = "Search UI over Sépaq camping reservations"
+requires-python = ">=3.12"
+
+[tool.uv.workspace]
+members = ["shared", "api", "scraper"]
+
+[tool.uv.sources]
+bettercamp-shared = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "N", "RUF"]
