@@ -10,14 +10,20 @@
 
 ### 2. Download the project
 
-Copy and paste this into Terminal:
+1. Open your browser and go to: https://github.com/toph-apps/bettercamp
+2. Click the green **Code** button (top right)
+3. Click **Download ZIP**
+4. Wait for the download to finish (check Downloads folder)
+5. Double-click `bettercamp-master.zip` to extract it
+6. You should now have a `bettercamp-master` folder on your Desktop or Downloads
+
+In Terminal, navigate to that folder:
 
 ```bash
-git clone https://github.com/toph-apps/bettercamp.git
-cd bettercamp
+cd ~/Downloads/bettercamp-master
 ```
 
-Press Enter.
+(Or replace `Downloads` with wherever you extracted it.)
 
 ### 3. Run the installer
 
@@ -58,14 +64,20 @@ To stop the app, go back to Terminal and press `Ctrl + C`.
 
 ### 2. Download the project
 
-Copy and paste this into PowerShell:
+1. Open your browser and go to: https://github.com/toph-apps/bettercamp
+2. Click the green **Code** button (top right)
+3. Click **Download ZIP**
+4. Wait for the download to finish (check Downloads folder)
+5. Right-click `bettercamp-master.zip` and select **Extract All**
+6. You should now have a `bettercamp-master` folder in Downloads
+
+In PowerShell, navigate to that folder:
 
 ```powershell
-git clone https://github.com/toph-apps/bettercamp.git
-cd bettercamp
+cd Downloads\bettercamp-master
 ```
 
-Press Enter.
+(Or replace `Downloads` with wherever you extracted it.)
 
 ### 3. Run the installer
 
@@ -96,12 +108,6 @@ To stop the app:
 ---
 
 ## Troubleshooting
-
-### "git command not found"
-
-You need to install Git:
-- **macOS**: Install from https://git-scm.com/download/mac
-- **Windows**: Install from https://git-scm.com/download/win
 
 ### "I closed the terminal/PowerShell by accident"
 

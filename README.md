@@ -6,19 +6,13 @@ See [`docs/superpowers/specs/2026-06-21-bettercamp-design.md`](docs/superpowers/
 
 ## Quickest Start (Automated)
 
-**👉 See [SETUP.md](SETUP.md) for detailed instructions with terminal/PowerShell walkthrough.**
+**👉 See [SETUP.md](SETUP.md) for detailed step-by-step instructions.**
 
-One-liner:
+**Quick version:**
 
-**macOS / Linux:**
-```bash
-git clone https://github.com/toph-apps/bettercamp.git && cd bettercamp && ./install.sh
-```
-
-**Windows:**
-```powershell
-git clone https://github.com/toph-apps/bettercamp.git; cd bettercamp; powershell -ExecutionPolicy Bypass -File install.ps1
-```
+1. Download: https://github.com/toph-apps/bettercamp → **Code** → **Download ZIP** → Extract
+2. Open Terminal/PowerShell in the extracted folder
+3. Run: `./install.sh` (macOS/Linux) or `powershell -ExecutionPolicy Bypass -File install.ps1` (Windows)
 
 The installers will:
 - Detect and install missing tools (uv, Node.js, Docker)
