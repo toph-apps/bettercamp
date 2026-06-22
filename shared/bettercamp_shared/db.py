@@ -4,7 +4,8 @@ from pathlib import Path
 
 from sqlmodel import Session, SQLModel, create_engine
 
-_DEFAULT_DB = Path(__file__).resolve().parents[3] / "data" / "catalog.db"
+# db.py lives at <repo>/shared/bettercamp_shared/db.py → parents[2] is repo root.
+_DEFAULT_DB = Path(__file__).resolve().parents[2] / "data" / "catalog.db"
 
 
 def db_path() -> Path:
