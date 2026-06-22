@@ -10,6 +10,8 @@ class Establishment(SQLModel, table=True):
     url: str
     lat: float | None = None
     lon: float | None = None
+    map_image_url: str | None = None  # overview gif: dots-on-map per sector
+    sector_dots_json: str = "[]"  # [{sector_id, left, top}] %s relative to gif
     scraped_at: datetime | None = None
 
 
@@ -26,6 +28,7 @@ class Sector(SQLModel, table=True):
     nearest_water_name: str | None = None
     nearest_water_m: int | None = None
     map_image_url: str | None = None
+    site_dots_json: str = "[]"  # [{site_id, left, top}] %s relative to map_image_url
     scraped_at: datetime | None = None
 
 

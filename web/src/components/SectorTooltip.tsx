@@ -28,6 +28,14 @@ export default function SectorTooltip({ s }: { s: SectorSearchResult }) {
       <dl className="mt-2 grid grid-cols-2 gap-y-1 text-xs">
         <dt className="text-slate-500">Sites</dt>
         <dd>{s.site_count}</dd>
+        {s.waterfront_count > 0 && (
+          <>
+            <dt className="text-slate-500">💧 Waterfront</dt>
+            <dd>
+              {s.waterfront_count} / {s.site_count}
+            </dd>
+          </>
+        )}
         {s.drive_min !== null && (
           <>
             <dt className="text-slate-500">Drive</dt>
@@ -36,7 +44,7 @@ export default function SectorTooltip({ s }: { s: SectorSearchResult }) {
             </dd>
           </>
         )}
-        {s.waterfront_score > 0 && (
+        {s.waterfront_score > 0 && s.waterfront_count === 0 && (
           <>
             <dt className="text-slate-500">Water</dt>
             <dd>

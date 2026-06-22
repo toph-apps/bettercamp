@@ -28,6 +28,8 @@ def _abs(u: str | None) -> str | None:
 
 
 def upsert_establishment(session: Session, data: EstablishmentData) -> None:
+    import json as _json
+
     row = session.get(Establishment, data.link.id)
     if row is None:
         row = Establishment(id=data.link.id, name=data.link.name, url=data.link.url)
@@ -38,6 +40,12 @@ def upsert_establishment(session: Session, data: EstablishmentData) -> None:
         row.lat = data.lat
     if data.lon:
         row.lon = data.lon
+    if data.map_image_url:
+        row.map_image_url = _abs(data.map_image_url)
+    if data.sector_dots:
+        row.sector_dots_json = _json.dumps(
+            [{"sector_id": d.sector_id, "left": d.left, "top": d.top} for d in data.sector_dots]
+        )
     row.scraped_at = _now()
     session.merge(row)
 
@@ -63,9 +71,15 @@ def upsert_sector(
         row.lat = data.lat
     if data.lon:
         row.lon = data.lon
+    import json as _json2
+
     row.site_count = len(data.sites)
     row.amenities_json = data.amenities.model_dump_json()
     row.map_image_url = data.map_image_url or row.map_image_url
+    if data.site_dots:
+        row.site_dots_json = _json2.dumps(
+            [{"site_id": d.site_id, "left": d.left, "top": d.top} for d in data.site_dots]
+        )
     if water:
         row.waterfront_score = water.score
         row.nearest_water_name = water.name

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 import httpx
@@ -10,6 +11,9 @@ from selectolax.parser import HTMLParser
 
 from .establishment import _extract_latlon
 from .http import fetch
+
+_STYLE_LEFT = re.compile(r"left:\s*([\d.]+)%")
+_STYLE_TOP = re.compile(r"top:\s*([\d.]+)%")
 
 
 def _abs(src: str) -> str:
@@ -29,6 +33,13 @@ class SiteLink:
 
 
 @dataclass
+class SiteDot:
+    site_id: str
+    left: float  # 0..100
+    top: float  # 0..100
+
+
+@dataclass
 class SectorData:
     sector_id: str
     name: str
@@ -38,6 +49,7 @@ class SectorData:
     amenities: Amenities = field(default_factory=Amenities)
     map_image_url: str | None = None
     sites: list[SiteLink] = field(default_factory=list)
+    site_dots: list[SiteDot] = field(default_factory=list)
 
 
 def _extract_map_image(tree: HTMLParser) -> str | None:
@@ -56,11 +68,42 @@ def _extract_map_image(tree: HTMLParser) -> str | None:
     return None
 
 
+def _extract_site_dots(tree: HTMLParser, sector_id: str) -> list[SiteDot]:
+    """`<li style="left:X%; top:Y%;"><a data-url="<sector>/<site>"></a></li>`"""
+    dots: list[SiteDot] = []
+    seen: set[str] = set()
+    for li in tree.css(".resultats-carte-carte li, .resultats-carte li"):
+        style = li.attributes.get("style") or ""
+        ml = _STYLE_LEFT.search(style)
+        mt = _STYLE_TOP.search(style)
+        if not (ml and mt):
+            continue
+        a = li.css_first("a.resultats-carte-point") or li.css_first("a[data-url]")
+        if not a:
+            continue
+        site_url = (a.attributes.get("data-url") or a.attributes.get("href") or "").strip()
+        if not site_url or "/reservation/camping/" not in site_url:
+            continue
+        slug = site_url.rstrip("/").split("/")[-1]
+        if slug in seen:
+            continue
+        seen.add(slug)
+        dots.append(
+            SiteDot(
+                site_id=f"{sector_id}__{slug}",
+                left=float(ml.group(1)),
+                top=float(mt.group(1)),
+            )
+        )
+    return dots
+
+
 def parse_sector(html: str, sector_id: str, name: str, url: str) -> SectorData:
     tree = HTMLParser(html)
     data = SectorData(sector_id=sector_id, name=name, url=url)
     data.lat, data.lon = _extract_latlon(html)
     data.map_image_url = _extract_map_image(tree)
+    data.site_dots = _extract_site_dots(tree, sector_id)
 
     # Sites: `a.resultats-item.is-blue` whose href matches `<sector_url>/<slug>`.
     # Take only one anchor per slug (the page renders each twice: a "Camping…

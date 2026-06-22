@@ -7,10 +7,11 @@ from bettercamp_shared import (
     DistanceCache,
     Establishment,
     Sector,
+    Site,
     get_session,
 )
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from app.osrm import OSRMClient
 
@@ -81,6 +82,15 @@ async def search(
         stmt = stmt.where(Sector.nearest_water_m <= max_water_m)
 
     rows = session.exec(stmt).all()
+
+    # waterfront site counts per sector (one query)
+    wf_counts: dict[str, int] = dict(
+        session.exec(
+            select(Site.sector_id, func.count(Site.id))
+            .where(Site.waterfront == True)  # noqa: E712
+            .group_by(Site.sector_id)
+        ).all()
+    )
 
     # amenity filter (in-Python since JSON match doesn't index well in SQLite)
     if want_amen:
@@ -154,6 +164,7 @@ async def search(
                 },
                 "amenity_summary": am.model_dump(exclude={"raw_icons"}),
                 "site_count": sec.site_count,
+                "waterfront_count": int(wf_counts.get(sec.id, 0)),
                 "url": sec.url,
             }
         )

@@ -32,6 +32,7 @@ export type SectorSearchResult = {
   nearest_water: { name: string | null; m: number | null };
   amenity_summary: Amenities;
   site_count: number;
+  waterfront_count: number;
   url: string;
 };
 

@@ -40,4 +40,22 @@ def get_establishment(est_id: str, session: Session = Depends(get_session)):
     sectors = session.exec(
         select(Sector).where(Sector.establishment_id == est_id)
     ).all()
-    return {**est.model_dump(), "sectors": [s.model_dump() for s in sectors]}
+    sector_ids = [s.id for s in sectors]
+    wf_counts: dict[str, int] = (
+        dict(
+            session.exec(
+                select(Site.sector_id, func.count(Site.id))
+                .where(Site.waterfront == True, Site.sector_id.in_(sector_ids))  # noqa: E712
+                .group_by(Site.sector_id)
+            ).all()
+        )
+        if sector_ids
+        else {}
+    )
+    return {
+        **est.model_dump(),
+        "sectors": [
+            {**s.model_dump(), "waterfront_count": int(wf_counts.get(s.id, 0))}
+            for s in sectors
+        ],
+    }

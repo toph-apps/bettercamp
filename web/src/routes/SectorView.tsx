@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
+import MapDotOverlay, { type Dot } from "../components/MapDotOverlay";
 
 type SiteRow = {
   id: string;
@@ -20,6 +21,7 @@ type SectorResp = {
   site_count: number;
   amenities_json: string;
   map_image_url: string | null;
+  site_dots_json: string;
   waterfront_score: number;
   nearest_water_name: string | null;
   nearest_water_m: number | null;
@@ -35,6 +37,15 @@ function firstPhoto(s: SiteRow): string | null {
   }
 }
 
+function safeParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function SectorView() {
   const { id = "" } = useParams();
   const { data, isLoading } = useQuery<SectorResp>({
@@ -45,6 +56,29 @@ export default function SectorView() {
 
   if (isLoading) return <div className="p-6">loading…</div>;
   if (!data) return <div className="p-6">not found</div>;
+
+  const waterfrontCount = data.sites.filter((s) => s.waterfront).length;
+  const sitesById: Record<string, SiteRow> = Object.fromEntries(
+    data.sites.map((s) => [s.id, s]),
+  );
+  const rawDots = safeParse<{ site_id: string; left: number; top: number }[]>(
+    data.site_dots_json,
+    [],
+  );
+  const dots: Dot<SiteRow>[] = rawDots.flatMap((d) => {
+    const s = sitesById[d.site_id];
+    if (!s) return [];
+    return [
+      {
+        key: d.site_id,
+        left: d.left,
+        top: d.top,
+        to: `/site/${d.site_id}`,
+        payload: s,
+        highlight: Boolean(s.waterfront),
+      },
+    ];
+  });
 
   return (
     <div className="h-full overflow-auto p-6">
@@ -57,8 +91,10 @@ export default function SectorView() {
       <h1 className="mt-2 text-2xl font-semibold">{data.name}</h1>
       <div className="text-sm text-slate-500">
         {data.site_count} sites
-        {data.waterfront_score > 0 && (
-          <> · 💧 {data.nearest_water_name ?? "water"} ({data.nearest_water_m} m)</>
+        {waterfrontCount > 0 && (
+          <span className="ml-2 text-cyan-700">
+            💧 {waterfrontCount} waterfront
+          </span>
         )}
       </div>
       <a
@@ -72,11 +108,43 @@ export default function SectorView() {
 
       {data.map_image_url && (
         <div className="mt-4">
-          <img
-            src={data.map_image_url}
-            alt={`${data.name} sector map`}
-            className="max-w-3xl rounded border bg-white"
-          />
+          {dots.length > 0 ? (
+            <MapDotOverlay
+              src={data.map_image_url}
+              alt={`${data.name} sector map`}
+              dots={dots}
+              tooltip={(s) => {
+                const photo = firstPhoto(s);
+                return (
+                  <div>
+                    {photo && (
+                      <img
+                        src={photo}
+                        alt=""
+                        className="mb-1 h-20 w-full rounded object-cover"
+                      />
+                    )}
+                    <div className="font-semibold">
+                      {s.name ?? `Site ${s.number}`}
+                    </div>
+                    {s.subtitle && (
+                      <div className="text-slate-500">{s.subtitle}</div>
+                    )}
+                    {s.waterfront && (
+                      <div className="text-cyan-700">💧 waterfront</div>
+                    )}
+                    <div className="mt-1 text-blue-700">click to open →</div>
+                  </div>
+                );
+              }}
+            />
+          ) : (
+            <img
+              src={data.map_image_url}
+              alt={`${data.name} sector map`}
+              className="max-w-3xl rounded border bg-white"
+            />
+          )}
         </div>
       )}
 
