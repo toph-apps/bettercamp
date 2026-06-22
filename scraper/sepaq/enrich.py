@@ -15,7 +15,6 @@ import math
 from dataclasses import dataclass
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Public Overpass mirrors. We round-robin across them — the main de mirror
 # rate-limits aggressively (returns 406 to anonymous clients) so falling
@@ -81,25 +80,28 @@ out tags center;
 """.strip()
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30), reraise=True)
+_OVERPASS_RETRYABLE = {406, 429, 502, 503, 504}
+_OVERPASS_TIMEOUT_S = 20.0  # short — give other mirrors a chance
+
+
 async def _query_overpass(c: httpx.AsyncClient, lat: float, lon: float) -> dict:
+    """Try each mirror once with a short timeout; surface the last error."""
     q = _QUERY.format(r=RADIUS_M, lat=lat, lon=lon)
-    headers = {
-        "User-Agent": OVERPASS_UA,
-        "Accept": "application/json",
-    }
+    headers = {"User-Agent": OVERPASS_UA, "Accept": "application/json"}
     last_exc: Exception | None = None
     for url in OVERPASS_MIRRORS:
         try:
-            r = await c.post(url, data={"data": q}, headers=headers)
-            if r.status_code in (406, 429):
+            r = await c.post(
+                url, data={"data": q}, headers=headers, timeout=_OVERPASS_TIMEOUT_S
+            )
+            if r.status_code in _OVERPASS_RETRYABLE:
                 last_exc = httpx.HTTPStatusError(
                     f"{url} -> {r.status_code}", request=r.request, response=r
                 )
                 continue
             r.raise_for_status()
             return r.json()
-        except httpx.HTTPError as exc:
+        except (httpx.HTTPError, httpx.TimeoutException) as exc:
             last_exc = exc
             continue
     raise last_exc or RuntimeError("all overpass mirrors failed")
