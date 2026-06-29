@@ -29,18 +29,18 @@ Write-Host "  API: http://localhost:8000" -ForegroundColor Cyan
 Write-Host "  Web: http://localhost:5173" -ForegroundColor Cyan
 Write-Host
 
+$projectRoot = (Get-Location).Path
+
 # Start API server in background
 Write-Host "Starting FastAPI backend..." -ForegroundColor Yellow
-$apiProcess = Start-Process -NoNewWindow -PassThru -ArgumentList "-c", "uv run --package bettercamp-api python -m api.main" powershell
+$apiProcess = Start-Process powershell -NoNewWindow -PassThru -WorkingDirectory $projectRoot -ArgumentList "-c", "uv run --package bettercamp-api python -m api.main"
 
 # Give API time to start
 Start-Sleep -Seconds 3
 
 # Start web dev server in background
 Write-Host "Starting Vite dev server..." -ForegroundColor Yellow
-Set-Location web
-$webProcess = Start-Process -NoNewWindow -PassThru -ArgumentList "-c", "npm run dev" powershell
-Set-Location ..
+$webProcess = Start-Process powershell -NoNewWindow -PassThru -WorkingDirectory "$projectRoot\web" -ArgumentList "-c", "npm run dev"
 
 # Give web server time to start
 Start-Sleep -Seconds 3
