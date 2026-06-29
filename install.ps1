@@ -1,18 +1,18 @@
 # bettercamp installer for Windows
 # Run with: powershell -ExecutionPolicy Bypass -File install.ps1
 
-Write-Host "🏕️  bettercamp installer (Windows)" -ForegroundColor Green
+Write-Host "bettercamp installer (Windows)" -ForegroundColor Green
 Write-Host
 
 function Test-Command {
     param([string]$Command)
     try {
         if (Get-Command $Command -ErrorAction Stop) {
-            Write-Host "✓ $Command found" -ForegroundColor Green
+            Write-Host "[OK] $Command found" -ForegroundColor Green
             return $true
         }
     } catch {
-        Write-Host "✗ $Command not found" -ForegroundColor Yellow
+        Write-Host "[MISSING] $Command not found" -ForegroundColor Yellow
         return $false
     }
 }
@@ -39,7 +39,7 @@ function Install-Node {
 Write-Host "Checking Python..."
 if (Test-Command python) {
     $pythonVersion = python --version 2>&1
-    Write-Host "✓ $pythonVersion" -ForegroundColor Green
+    Write-Host "[OK] $pythonVersion" -ForegroundColor Green
 } else {
     Write-Host "Python 3.12+ not found" -ForegroundColor Red
     Write-Host "Please install from https://www.python.org/" -ForegroundColor Yellow
@@ -84,7 +84,7 @@ Test-Command npm | Out-Null
 Write-Host
 Write-Host "Checking Docker (optional, needed for driving distance)..."
 if (-not (Test-Command docker)) {
-    Write-Host "ℹ Docker not found" -ForegroundColor Yellow
+    Write-Host "Docker not found" -ForegroundColor Yellow
     $response = Read-Host "Install Docker? (y/n)"
     if ($response -eq 'y') {
         Write-Host "Please install Docker Desktop from https://www.docker.com/" -ForegroundColor Yellow
@@ -111,7 +111,7 @@ npm install
 Set-Location ..
 
 Write-Host
-Write-Host "✓ Installation complete!" -ForegroundColor Green
+Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host
 Write-Host "Next steps:"
 Write-Host "  1. Start the app:"
