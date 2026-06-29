@@ -1,7 +1,7 @@
 # Run bettercamp dev servers on Windows
 # Run with: powershell -ExecutionPolicy Bypass -File run.ps1
 
-Write-Host "🏕️  Starting bettercamp..." -ForegroundColor Green
+Write-Host "Starting bettercamp..." -ForegroundColor Green
 Write-Host
 
 # Check if we're in the right directory
