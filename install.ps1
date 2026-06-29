@@ -85,9 +85,11 @@ Write-Host
 Write-Host "Checking Docker (optional, needed for driving distance)..."
 if (-not (Test-Command docker)) {
     Write-Host "Docker not found" -ForegroundColor Yellow
-    $response = Read-Host "Install Docker? (y/n)"
+    $response = Read-Host "Install Docker Desktop? (y/n)"
     if ($response -eq 'y') {
-        Write-Host "Please install Docker Desktop from https://www.docker.com/" -ForegroundColor Yellow
+        Write-Host "Installing Docker Desktop via winget..."
+        winget install -e --id Docker.DockerDesktop
+        Write-Host "Docker Desktop installed. You must restart your computer before using Docker." -ForegroundColor Yellow
     }
 }
 
