@@ -33,7 +33,7 @@ $projectRoot = (Get-Location).Path
 
 # Start API server in background
 Write-Host "Starting FastAPI backend..." -ForegroundColor Yellow
-$apiProcess = Start-Process powershell -NoNewWindow -PassThru -WorkingDirectory $projectRoot -ArgumentList "-c", "uv run --package bettercamp-api python -m api.main"
+$apiProcess = Start-Process powershell -NoNewWindow -PassThru -WorkingDirectory "$projectRoot\api" -ArgumentList "-c", "uv run python -m app.main"
 
 # Give API time to start
 Start-Sleep -Seconds 3
