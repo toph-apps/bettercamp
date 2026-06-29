@@ -33,7 +33,7 @@ $projectRoot = (Get-Location).Path
 
 # Start API server in background
 Write-Host "Starting FastAPI backend..." -ForegroundColor Yellow
-$apiProcess = Start-Process powershell -NoNewWindow -PassThru -WorkingDirectory "$projectRoot\api" -ArgumentList "-c", "uv run python -m app.main"
+$apiProcess = Start-Process powershell -NoNewWindow -PassThru -WorkingDirectory "$projectRoot\api" -ArgumentList "-c", "uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
 
 # Give API time to start
 Start-Sleep -Seconds 3
