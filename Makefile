@@ -1,4 +1,4 @@
-.PHONY: dev api web scrape osrm-build osrm-up osrm-down test build clean
+.PHONY: dev api web scrape osrm-build osrm-up osrm-down osrm-precompute test build clean
 
 dev:
 	@echo "Starting API :8000 and web :5173"
@@ -21,6 +21,9 @@ osrm-up:
 
 osrm-down:
 	docker compose down osrm
+
+osrm-precompute:
+	cd scraper && uv run python -m sepaq.distances --osrm-url https://router.project-osrm.org
 
 test:
 	uv run --package bettercamp-api pytest api/tests
