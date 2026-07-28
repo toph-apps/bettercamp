@@ -5,7 +5,8 @@ import type { EstablishmentMarker } from "../lib/aggregate";
 import EstablishmentTooltip from "./EstablishmentTooltip";
 import { createRoot, type Root } from "react-dom/client";
 
-const STYLE_URL = "https://tiles.stadiamaps.com/styles/outdoors.json";
+// OpenFreeMap: fully free OSM vector tiles, no signup or key required.
+const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
 export default function Map({
   establishments,

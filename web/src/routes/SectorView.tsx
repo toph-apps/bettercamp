@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { api } from "../api/client";
 import MapDotOverlay, { type Dot } from "../components/MapDotOverlay";
 
@@ -11,7 +12,21 @@ type SiteRow = {
   url: string | null;
   photos_json: string;
   waterfront: boolean | null;
+  price_text: string | null;
 };
+
+/** Extract per-night price in dollars. Sépaq format: "Starting at$23.95/night". */
+function parseNightlyPrice(raw: string | null | undefined): number | null {
+  if (!raw) return null;
+  const m = raw.match(/\$\s*([\d.]+)/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function fmtMoney(n: number): string {
+  return `$${n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 type SectorResp = {
   id: string;
@@ -48,6 +63,7 @@ function safeParse<T>(raw: string | null | undefined, fallback: T): T {
 
 export default function SectorView() {
   const { id = "" } = useParams();
+  const [nights, setNights] = useState(4); // Wed → Sun
   const { data, isLoading } = useQuery<SectorResp>({
     queryKey: ["sector", id],
     queryFn: () => api.sector(id) as Promise<SectorResp>,
@@ -58,6 +74,12 @@ export default function SectorView() {
   if (!data) return <div className="p-6">not found</div>;
 
   const waterfrontCount = data.sites.filter((s) => s.waterfront).length;
+  const priced = data.sites
+    .map((s) => parseNightlyPrice(s.price_text))
+    .filter((v): v is number => v != null);
+  const pricedSum = priced.reduce((a, b) => a + b, 0);
+  const totalCost = pricedSum * nights;
+  const unpriced = data.sites.length - priced.length;
   const sitesById: Record<string, SiteRow> = Object.fromEntries(
     data.sites.map((s) => [s.id, s]),
   );
@@ -105,6 +127,36 @@ export default function SectorView() {
       >
         View on Sépaq ↗
       </a>
+
+      {data.sites.length > 0 && (
+        <section className="mt-4 rounded border bg-slate-50 p-3 text-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <label className="flex items-center gap-2">
+              <span className="font-medium">Nights</span>
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={nights}
+                onChange={(e) => setNights(Math.max(1, Number(e.target.value) || 1))}
+                className="w-16 rounded border px-2 py-1"
+              />
+              <span className="text-xs text-slate-500">Wed → Sun = 4</span>
+            </label>
+            <div className="text-slate-700">
+              <span className="font-medium">Whole-sector total</span>{" "}
+              <span className="text-lg font-semibold">{fmtMoney(totalCost)}</span>{" "}
+              <span className="text-xs text-slate-500">
+                = {fmtMoney(pricedSum)}/night × {nights}
+              </span>
+            </div>
+          </div>
+          <div className="mt-1 text-xs text-slate-500">
+            {priced.length} of {data.sites.length} sites priced
+            {unpriced > 0 && ` (${unpriced} without listed price — total is a lower bound)`}
+          </div>
+        </section>
+      )}
 
       {data.map_image_url && (
         <div className="mt-4">
