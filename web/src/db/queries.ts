@@ -182,7 +182,9 @@ export async function search(p: SearchParams): Promise<SectorSearchResult[]> {
   const origin = parseOrigin(p.origin);
   const wantAmen = parseRequired(p.amenities);
 
-  const clauses: string[] = [];
+  // Hide empty parent sectors whose bookable sites were promoted into
+  // separate sub-sector rows by the scraper. Nothing to book at that level.
+  const clauses: string[] = ["s.site_count > 0"];
   const args: unknown[] = [];
   if (p.region) {
     clauses.push("e.region = ?");
