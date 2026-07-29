@@ -1,0 +1,80 @@
+:root {
+  --bg: #FAFAF7;
+  --surface: #FFFFFF;
+  --surface-2: #F1EFE9;
+  --ink: #0F1A17;
+  --ink-2: #4A5854;
+  --ink-3: #8A928E;
+  --rule: #E4E1D8;
+  --moss: #3F5D45;
+  --moss-fg: #FFFFFF;
+  --lake: #2E6E8E;
+  --trail: #B3915E;
+  --warn: #B36A2E;
+
+  --ramp-1: #3F5D45;
+  --ramp-2: #5D7B54;
+  --ramp-3: #8A9660;
+  --ramp-4: #A8956B;
+  --ramp-5: #B3915E;
+}
+
+:root.dark {
+  --bg: #0F1614;
+  --surface: #161F1C;
+  --surface-2: #1E2925;
+  --ink: #EDECE4;
+  --ink-2: #A8B0AC;
+  --ink-3: #6B736F;
+  --rule: #232B29;
+  --moss: #7BA085;
+  --moss-fg: #0F1614;
+  --lake: #8FBED6;
+  --trail: #D4B891;
+  --warn: #E5A26A;
+
+  --ramp-1: #7BA085;
+  --ramp-2: #95AE86;
+  --ramp-3: #B5B58A;
+  --ramp-4: #C7B48C;
+  --ramp-5: #D4B891;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--moss);
+  outline-offset: 2px;
+}
+
+/* MapLibre popup chrome defaults to a white bubble regardless of theme —
+   match it to the surface token so it doesn't clash in dark mode. */
+.maplibregl-popup-content {
+  background: var(--surface);
+  padding: 0;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--surface);
+}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--surface);
+}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--surface);
+}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

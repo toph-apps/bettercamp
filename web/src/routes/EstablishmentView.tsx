@@ -1,6 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { ExternalLink } from "lucide-react";
 import { api } from "../api/client";
+import AmenityIcon from "../components/AmenityIcon";
 import MapDotOverlay, { type Dot } from "../components/MapDotOverlay";
 
 type SectorRow = {
@@ -41,8 +43,8 @@ export default function EstablishmentView() {
     enabled: Boolean(id),
   });
 
-  if (isLoading) return <div className="p-6">loading…</div>;
-  if (!data) return <div className="p-6">not found</div>;
+  if (isLoading) return <div className="p-6 text-sm text-ink-2">loading…</div>;
+  if (!data) return <div className="p-6 text-sm text-ink-2">not found</div>;
 
   const sectorsById: Record<string, SectorRow> = Object.fromEntries(
     data.sectors.map((s) => [s.id, s]),
@@ -67,20 +69,21 @@ export default function EstablishmentView() {
   });
 
   return (
-    <div className="h-full overflow-auto p-6">
-      <h1 className="text-2xl font-semibold">{data.name}</h1>
-      <div className="text-sm text-slate-500">{data.region ?? "—"}</div>
+    <div className="mx-auto h-full max-w-4xl overflow-auto px-6 py-8">
+      <h1 className="font-serif text-hero">{data.name}</h1>
+      <div className="mt-1 text-sm tabular-nums text-ink-2">{data.region ?? "—"}</div>
       <a
         href={data.url}
         target="_blank"
         rel="noreferrer"
-        className="text-xs text-blue-600 hover:underline"
+        className="mt-1 inline-flex items-center gap-1 text-xs text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
       >
-        View on Sépaq ↗
+        View on Sépaq
+        <ExternalLink size={12} strokeWidth={1.75} />
       </a>
 
       {data.map_image_url && dots.length > 0 && (
-        <div className="mt-4">
+        <div className="mt-4 overflow-hidden rounded-md border border-rule">
           <MapDotOverlay
             src={data.map_image_url}
             alt={`${data.name} overview map`}
@@ -88,36 +91,40 @@ export default function EstablishmentView() {
             tooltip={(s) => (
               <div>
                 <div className="font-semibold">{s.name}</div>
-                <div className="mt-1 text-slate-500">{s.site_count} sites</div>
+                <div className="mt-1 text-ink-2">{s.site_count} sites</div>
                 {s.waterfront_count > 0 && (
-                  <div className="text-cyan-700">
-                    💧 {s.waterfront_count} waterfront
+                  <div className="flex items-center gap-1 text-lake">
+                    <AmenityIcon amenityKey="waterfront" />
+                    {s.waterfront_count} waterfront
                   </div>
                 )}
-                <div className="mt-1 text-blue-700">click to open →</div>
+                <div className="mt-1 text-ink">click to open →</div>
               </div>
             )}
           />
         </div>
       )}
 
-      <h2 className="mt-6 text-lg font-medium">Sectors</h2>
+      <h2 className="mt-6 text-base font-semibold">Sectors</h2>
       <ul className="mt-2 space-y-2">
         {data.sectors.map((s) => (
           <li
             key={s.id}
-            className="flex items-center gap-3 rounded border bg-white p-3"
+            className={`flex items-center gap-3 rounded-md border border-rule bg-surface p-3 ${
+              s.waterfront_count > 0 ? "border-l-2 border-l-lake" : ""
+            }`}
           >
             <Link
               to={`/sector/${s.id}`}
-              className="font-medium text-blue-700 hover:underline"
+              className="font-medium text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
             >
               {s.name}
             </Link>
-            <span className="text-xs text-slate-500">{s.site_count} sites</span>
+            <span className="text-xs tabular-nums text-ink-2">{s.site_count} sites</span>
             {s.waterfront_count > 0 && (
-              <span className="text-xs text-cyan-700">
-                💧 {s.waterfront_count} waterfront
+              <span className="flex items-center gap-1 text-xs text-lake">
+                <AmenityIcon amenityKey="waterfront" />
+                {s.waterfront_count} waterfront
               </span>
             )}
           </li>
