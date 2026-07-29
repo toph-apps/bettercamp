@@ -1,8 +1,31 @@
 # bettercamp
 
-Better search UI for Sépaq's camping reservations in Quebec. Browse campsites by location, amenities, and driving distance. Bookings still go through sepaq.com — this is a search-and-discovery layer.
+Better search UI for [Sépaq](https://www.sepaq.com) camping reservations in Quebec. Browse campsites by amenities, driving distance from Montreal, and per-site pricing. Bookings still happen on sepaq.com — this is a search-and-discovery layer.
+
+**Live:** https://bettercamp.pages.dev
 
 See [`docs/superpowers/specs/2026-06-21-bettercamp-design.md`](docs/superpowers/specs/2026-06-21-bettercamp-design.md) for the full design.
+
+## How it works
+
+The production build is a **fully static site** on Cloudflare Pages. The frontend loads a pre-built SQLite catalog (`data/catalog.db`) via [sql.js](https://sql.js.org/) and runs every search, filter, and sort in the browser. There is no backend at runtime.
+
+- **Driving distance** from Montreal is precomputed by the scraper against public OSRM and stored in the DB. Custom-origin distances fall back to `router.project-osrm.org` from the browser and cache in `localStorage`.
+- **Map tiles** come from [OpenFreeMap](https://openfreemap.org/) (no key required).
+- **Auto-deploy**: every push to `master` triggers `.github/workflows/deploy.yml`, which builds `web/dist` and publishes to Cloudflare Pages via `wrangler`.
+
+The FastAPI backend under `api/` still exists for local dev convenience but is not used in production.
+
+## Project Structure
+
+```
+api/        FastAPI backend (dev-only; not deployed)
+scraper/    Sépaq crawler + distance precompute
+web/        Vite + React + TypeScript + MapLibre + sql.js frontend
+osrm/       Optional self-hosted OSRM (docker) for offline precompute
+docs/       Design specs & architecture
+data/       SQLite catalog (35 establishments, 331 sectors, ~7000 sites)
+```
 
 ## Quickest Start (Automated)
 
@@ -11,82 +34,58 @@ See [`docs/superpowers/specs/2026-06-21-bettercamp-design.md`](docs/superpowers/
 **Quick version:**
 
 1. Download: https://github.com/toph-apps/bettercamp → **Code** → **Download ZIP** → Extract
-2. Open Terminal/PowerShell in the extracted folder
-3. Run: `./install.sh` (macOS/Linux) or `powershell -ExecutionPolicy Bypass -File install.ps1` (Windows)
+2. Open Terminal / PowerShell in the extracted folder
+3. Run: `./install.sh` (macOS / Linux) or `powershell -ExecutionPolicy Bypass -File install.ps1` (Windows)
 
 The installers will:
-- Detect and install missing tools (uv, Node.js, Docker)
+- Detect and install missing tools (uv, Node.js)
 - Install Python + frontend dependencies
 - Start the dev server and open the app in your browser
 
-After installation, use `./run.sh` (macOS/Linux) or `.\run.ps1` (Windows) to start again.
+After installation, use `./run.sh` (macOS / Linux) or `.\run.ps1` (Windows) to start again.
 
 ---
 
-## Project Structure
-
-```
-api/        FastAPI backend (Python)
-scraper/    Weekly Sépaq + Overpass crawler
-web/        Vite + React + TypeScript + MapLibre frontend
-osrm/       Self-hosted OSRM (Docker) for driving distance
-docs/       Design specs & architecture
-data/       SQLite database with camping catalog (included)
-```
-
-## Prerequisites
+## Prerequisites (manual setup)
 
 - **Python 3.12+** (install [`uv`](https://docs.astral.sh/uv/getting-started/installation/))
-- **Node.js 18+** and npm
-- **Docker** (for OSRM routing service)
+- **Node.js 20+** and npm
 - **Git**
+- **Docker** — only needed if you want to self-host OSRM instead of using the public demo when precomputing distances
 
 ## Setup
 
 ```bash
-# Clone the repo
 git clone https://github.com/toph-apps/bettercamp.git
 cd bettercamp
 
-# Install Python dependencies
+# Python deps (scraper + FastAPI + shared models)
 uv sync --all-packages
 
-# Install frontend dependencies
+# Frontend deps
 cd web && npm install && cd ..
 ```
 
 ## Running
 
-### Quick start (basic search, no driving distance)
-
 ```bash
 make dev
-# Opens http://localhost:5173 with API on :8000
-# Database has 35 establishments, 141 sectors, 2,575 sites; search works immediately
+# API on :8000, web on :5173, opens http://localhost:5173
 ```
 
-### With driving distance (requires Docker)
+The web app loads the shipped `data/catalog.db` directly, so the API server is optional in dev too — it is kept around only because a couple of scraper scripts and tests import through it.
+
+## Refreshing the catalog
 
 ```bash
-# Build OSRM routing (one-time, ~15 min)
-make osrm-build
-
-# Start OSRM service
-make osrm-up
-
-# In another terminal
-make dev
-# Now `/api/search` includes driving distance from Montreal
+make scrape            # crawl Sépaq, detect sub-sectors, update data/catalog.db
+make osrm-precompute   # recompute Montreal driving distances (public OSRM by default)
+git add data/catalog.db
+git commit -m "data refresh"
+git push               # auto-deploys via .github/workflows/deploy.yml
 ```
 
-Stop OSRM with `make osrm-down`.
-
-## What's Included
-
-- **Pre-populated database** (`data/catalog.db`, ~5 MB) with 35 establishments, 141 sectors, and 2,575 campsites
-- **Full API** with `/api/establishments`, `/api/search`, and `/api/health/scrape`
-- **Frontend** with interactive map and amenity search filters
-- **Scraper** to update the database from Sépaq and Overpass (optional)
+`make scrape` takes ~30 min (Sépaq rate-limits). `make osrm-precompute` takes seconds against the public OSRM demo. Add `--osrm-url http://localhost:5000` to hit your own OSRM instance instead.
 
 ## Available Commands
 
@@ -95,20 +94,16 @@ Stop OSRM with `make osrm-down`.
 | `make dev` | Run API (:8000) + web (:5173) with hot reload |
 | `make test` | Run pytest + vitest |
 | `make build` | Production build of frontend (outputs to `web/dist`) |
-| `make scrape` | Update database by scraping Sépaq |
-| `make osrm-build` | Download Quebec OSM data and build OSRM graph (~15 min, 700 MB) |
-| `make osrm-up` | Start OSRM routing service on :5000 |
-| `make osrm-down` | Stop OSRM |
+| `make scrape` | Update `data/catalog.db` by crawling Sépaq |
+| `make osrm-precompute` | Precompute Montreal driving distances into `distancecache` |
+| `make osrm-build` | (Optional) Download Quebec OSM data + build local OSRM graph (~15 min, 700 MB) |
+| `make osrm-up` / `make osrm-down` | (Optional) Start / stop local OSRM |
 
-## Status
+## Deploy notes
 
-End-to-end functional. Known limitations:
+Cloudflare Pages project `bettercamp` is wired to the repo. The GitHub Action needs two repo secrets:
 
-| What's Missing | Why | To Fix |
-|---|---|---|
-| Amenity icons | Sépaq HTML selectors don't match | Update scraper selectors in `scraper/sepaq/sector.py` |
-| Region field | Sépaq doesn't expose it | Hard-code region mapping by campsite slug |
-| Driving distance | Requires OSRM | Run `make osrm-build && make osrm-up` |
-| Waterfront score | Disabled to speed up scraping | Re-run scraper without `--no-water` flag |
+- `CLOUDFLARE_API_TOKEN` — scoped to `Pages: Write`
+- `CLOUDFLARE_ACCOUNT_ID`
 
-See [`docs/superpowers/specs/2026-06-21-bettercamp-design.md`](docs/superpowers/specs/2026-06-21-bettercamp-design.md) for roadmap (M0–M6).
+The `_headers` file marks `/assets/*` as immutable (Vite fingerprints the JS, CSS, WASM, and the DB) and forces the HTML shell to revalidate so users pick up new asset hashes.
