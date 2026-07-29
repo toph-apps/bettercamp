@@ -33,11 +33,11 @@ jobs:
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
+        # Branch is hardcoded because push trigger is restricted to `master`
+        # (the project's production branch on Cloudflare). Adding another
+        # trigger branch means adding a matching --branch value here.
         uses: cloudflare/wrangler-action@v3
-        env:
-          BRANCH: ${{ github.ref_name }}
-          COMMIT: ${{ github.sha }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy web/dist --project-name=bettercamp --branch="$BRANCH" --commit-hash="$COMMIT"
+          command: pages deploy web/dist --project-name=bettercamp --branch=master
