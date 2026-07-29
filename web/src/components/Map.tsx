@@ -49,7 +49,8 @@ export default function Map({
       const el = document.createElement("div");
       el.className =
         "h-4 w-4 rounded-full border-2 border-white shadow-md ring-1 ring-slate-400 cursor-pointer";
-      el.style.background = e.waterfront_count > 0 ? "#0891b2" : "#2563eb";
+      // Blue = has waterfront sites, green = no waterfront sites.
+      el.style.background = e.waterfront_count > 0 ? "#2563eb" : "#16a34a";
 
       const popupEl = document.createElement("div");
       const root = createRoot(popupEl);

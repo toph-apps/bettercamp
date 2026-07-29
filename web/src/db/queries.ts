@@ -196,11 +196,10 @@ export async function search(p: SearchParams): Promise<SectorSearchResult[]> {
     clauses.push("s.site_count <= ?");
     args.push(p.max_sites);
   }
-  if (p.waterfront) clauses.push("s.waterfront_score > 0");
-  if (p.max_water_m != null) {
-    clauses.push("s.nearest_water_m <= ?");
-    args.push(p.max_water_m);
-  }
+  // `waterfront` and `max_water_m` are applied post-query against the
+  // per-site waterfront count (wfCounts) because "the sector has waterfront
+  // sites" is a stronger, more useful signal than the sector map's
+  // Overpass-derived distance-to-water.
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
 
   const rows = rowsToObjects<SectorRow>(
@@ -221,9 +220,12 @@ export async function search(p: SearchParams): Promise<SectorSearchResult[]> {
   for (const r of wfRows) wfCounts.set(r.sector_id, Number(r.c));
 
   const withAmen = rows.map((r) => ({ row: r, am: parseAmenitiesJson(r.amenities_json) }));
-  const filtered = Object.keys(wantAmen).length
+  let filtered = Object.keys(wantAmen).length
     ? withAmen.filter(({ am }) => amenitiesMatch(am, wantAmen))
     : withAmen;
+  if (p.waterfront) {
+    filtered = filtered.filter(({ row }) => (wfCounts.get(row.id) ?? 0) > 0);
+  }
 
   const distances = await resolveDistances(
     db,
@@ -260,7 +262,7 @@ export async function search(p: SearchParams): Promise<SectorSearchResult[]> {
   if (sort === "drive_min") {
     out.sort((a, b) => (a.drive_min ?? 1e9) - (b.drive_min ?? 1e9));
   } else if (sort === "waterfront") {
-    out.sort((a, b) => -((a.waterfront_score ?? 0) - (b.waterfront_score ?? 0)));
+    out.sort((a, b) => (b.waterfront_count ?? 0) - (a.waterfront_count ?? 0));
   } else {
     out.sort((a, b) => a.name.localeCompare(b.name));
   }

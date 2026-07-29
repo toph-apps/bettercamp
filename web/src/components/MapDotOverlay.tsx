@@ -47,7 +47,7 @@ export default function MapDotOverlay<T>({
           >
             <span
               className={`block h-3 w-3 rounded-full border-2 border-white shadow ring-1 ring-slate-700 ${
-                d.highlight ? "bg-cyan-500" : "bg-blue-600"
+                d.highlight ? "bg-blue-600" : "bg-green-600"
               } ${active ? "h-4 w-4" : ""}`}
             />
             {active && (

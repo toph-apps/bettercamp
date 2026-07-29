@@ -57,24 +57,16 @@ export default function FilterPanel() {
           <input
             type="checkbox"
             checked={!!params.waterfront}
-            onChange={(e) => setParams({ ...params, waterfront: e.target.checked || undefined })}
+            onChange={(e) =>
+              setParams({
+                ...params,
+                waterfront: e.target.checked || undefined,
+                max_water_m: undefined,
+              })
+            }
           />
-          Waterfront sectors only
+          Has waterfront sites
         </label>
-        {params.waterfront && (
-          <div className="mt-1">
-            <label>Max distance to water: {params.max_water_m ?? 500} m</label>
-            <input
-              type="range"
-              min={50}
-              max={500}
-              step={50}
-              value={params.max_water_m ?? 500}
-              onChange={(e) => setParams({ ...params, max_water_m: Number(e.target.value) })}
-              className="w-full"
-            />
-          </div>
-        )}
       </section>
 
       <section>
@@ -132,7 +124,7 @@ export default function FilterPanel() {
         >
           <option value="name">Name</option>
           <option value="drive_min">Drive time</option>
-          <option value="waterfront">Waterfront score</option>
+          <option value="waterfront">Waterfront sites</option>
         </select>
       </section>
     </div>
