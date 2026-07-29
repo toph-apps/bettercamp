@@ -7,9 +7,12 @@ import { aggregateByEstablishment } from "../lib/aggregate";
 
 export default function MapView() {
   const [params] = useTypedSearchParams();
+  // Map view shows every matching sector — cap high enough that the default
+  // list-view limit doesn't silently hide dots.
+  const mapParams = { ...params, limit: params.limit ?? 1000 };
   const { data, isLoading, error } = useQuery({
-    queryKey: ["search", params],
-    queryFn: () => api.search(params),
+    queryKey: ["search-map", mapParams],
+    queryFn: () => api.search(mapParams),
   });
   const establishments = useMemo(
     () => aggregateByEstablishment(data ?? []),
