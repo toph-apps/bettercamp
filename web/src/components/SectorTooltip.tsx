@@ -20,17 +20,17 @@ export default function SectorTooltip({ s }: { s: SectorSearchResult }) {
     .filter(Boolean);
 
   return (
-    <div className="w-64 rounded-md border bg-white p-3 shadow-lg">
+    <div className="w-64 rounded-md border border-rule bg-surface p-3 text-ink shadow-lg">
       <div className="text-sm font-semibold">{s.name}</div>
-      <div className="text-xs text-slate-500">
+      <div className="text-xs text-ink-2">
         {s.establishment.name} · {s.establishment.region ?? "—"}
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-y-1 text-xs">
-        <dt className="text-slate-500">Sites</dt>
+        <dt className="text-ink-2">Sites</dt>
         <dd>{s.site_count}</dd>
         {s.waterfront_count > 0 && (
           <>
-            <dt className="text-slate-500">💧 Waterfront</dt>
+            <dt className="text-ink-2">💧 Waterfront</dt>
             <dd>
               {s.waterfront_count} / {s.site_count}
             </dd>
@@ -38,7 +38,7 @@ export default function SectorTooltip({ s }: { s: SectorSearchResult }) {
         )}
         {s.drive_min !== null && (
           <>
-            <dt className="text-slate-500">Drive</dt>
+            <dt className="text-ink-2">Drive</dt>
             <dd>
               {s.drive_min} min · {s.drive_km} km
             </dd>
@@ -46,7 +46,7 @@ export default function SectorTooltip({ s }: { s: SectorSearchResult }) {
         )}
         {s.waterfront_score > 0 && s.waterfront_count === 0 && (
           <>
-            <dt className="text-slate-500">Water</dt>
+            <dt className="text-ink-2">Water</dt>
             <dd>
               {s.nearest_water.name ?? "nearby"}
               {s.nearest_water.m !== null ? ` · ${s.nearest_water.m} m` : ""}
@@ -58,7 +58,7 @@ export default function SectorTooltip({ s }: { s: SectorSearchResult }) {
       <div className="mt-2 flex justify-between text-xs">
         <a
           href={`/sector/${s.sector_id}`}
-          className="text-blue-700 hover:underline"
+          className="text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
         >
           See sites →
         </a>
@@ -66,7 +66,7 @@ export default function SectorTooltip({ s }: { s: SectorSearchResult }) {
           href={s.url}
           target="_blank"
           rel="noreferrer"
-          className="text-blue-600 hover:underline"
+          className="text-ink-2 underline decoration-rule underline-offset-4 hover:decoration-ink"
         >
           View on Sépaq ↗
         </a>

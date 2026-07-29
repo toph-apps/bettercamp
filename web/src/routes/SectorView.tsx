@@ -1,7 +1,9 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { api } from "../api/client";
+import AmenityIcon from "../components/AmenityIcon";
 import MapDotOverlay, { type Dot } from "../components/MapDotOverlay";
 
 type SiteRow = {
@@ -70,8 +72,8 @@ export default function SectorView() {
     enabled: Boolean(id),
   });
 
-  if (isLoading) return <div className="p-6">loading…</div>;
-  if (!data) return <div className="p-6">not found</div>;
+  if (isLoading) return <div className="p-6 text-sm text-ink-2">loading…</div>;
+  if (!data) return <div className="p-6 text-sm text-ink-2">not found</div>;
 
   const waterfrontCount = data.sites.filter((s) => s.waterfront).length;
   const priced = data.sites
@@ -103,19 +105,20 @@ export default function SectorView() {
   });
 
   return (
-    <div className="h-full overflow-auto p-6">
+    <div className="mx-auto h-full max-w-4xl overflow-auto px-6 py-8">
       <Link
         to={`/establishment/${data.establishment_id}`}
-        className="text-xs text-blue-600 hover:underline"
+        className="text-xs text-ink-2 underline decoration-rule underline-offset-4 hover:decoration-ink"
       >
         ← back to establishment
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold">{data.name}</h1>
-      <div className="text-sm text-slate-500">
+      <h1 className="mt-2 font-serif text-hero">{data.name}</h1>
+      <div className="mt-1 flex items-center gap-2 text-sm tabular-nums text-ink-2">
         {data.site_count} sites
         {waterfrontCount > 0 && (
-          <span className="ml-2 text-cyan-700">
-            💧 {waterfrontCount} waterfront
+          <span className="flex items-center gap-1 text-lake">
+            <AmenityIcon amenityKey="waterfront" />
+            {waterfrontCount} waterfront
           </span>
         )}
       </div>
@@ -123,13 +126,14 @@ export default function SectorView() {
         href={data.url}
         target="_blank"
         rel="noreferrer"
-        className="mt-1 inline-block text-xs text-blue-600 hover:underline"
+        className="mt-1 inline-flex items-center gap-1 text-xs text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
       >
-        View on Sépaq ↗
+        View on Sépaq
+        <ExternalLink size={12} strokeWidth={1.75} />
       </a>
 
       {data.sites.length > 0 && (
-        <section className="mt-4 rounded border bg-slate-50 p-3 text-sm">
+        <section className="mt-4 rounded-md border border-rule bg-surface-2 p-3 text-sm">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <label className="flex items-center gap-2">
               <span className="font-medium">Nights</span>
@@ -139,19 +143,19 @@ export default function SectorView() {
                 max={30}
                 value={nights}
                 onChange={(e) => setNights(Math.max(1, Number(e.target.value) || 1))}
-                className="w-16 rounded border px-2 py-1"
+                className="w-16 rounded border border-rule bg-surface px-2 py-1 tabular-nums"
               />
-              <span className="text-xs text-slate-500">Wed → Sun = 4</span>
+              <span className="text-xs text-ink-2">Wed → Sun = 4</span>
             </label>
-            <div className="text-slate-700">
+            <div className="text-ink">
               <span className="font-medium">Whole-sector total</span>{" "}
-              <span className="text-lg font-semibold">{fmtMoney(totalCost)}</span>{" "}
-              <span className="text-xs text-slate-500">
+              <span className="text-lg font-semibold tabular-nums">{fmtMoney(totalCost)}</span>{" "}
+              <span className="text-xs tabular-nums text-ink-2">
                 = {fmtMoney(pricedSum)}/night × {nights}
               </span>
             </div>
           </div>
-          <div className="mt-1 text-xs text-slate-500">
+          <div className="mt-1 text-xs text-ink-2">
             {priced.length} of {data.sites.length} sites priced
             {unpriced > 0 && ` (${unpriced} without listed price — total is a lower bound)`}
           </div>
@@ -159,7 +163,7 @@ export default function SectorView() {
       )}
 
       {data.map_image_url && (
-        <div className="mt-4">
+        <div className="mt-4 overflow-hidden rounded-md border border-rule">
           {dots.length > 0 ? (
             <MapDotOverlay
               src={data.map_image_url}
@@ -180,12 +184,15 @@ export default function SectorView() {
                       {s.name ?? `Site ${s.number}`}
                     </div>
                     {s.subtitle && (
-                      <div className="text-slate-500">{s.subtitle}</div>
+                      <div className="text-ink-2">{s.subtitle}</div>
                     )}
                     {s.waterfront && (
-                      <div className="text-cyan-700">💧 waterfront</div>
+                      <div className="flex items-center gap-1 text-lake">
+                        <AmenityIcon amenityKey="waterfront" />
+                        waterfront
+                      </div>
                     )}
-                    <div className="mt-1 text-blue-700">click to open →</div>
+                    <div className="mt-1 text-ink">click to open →</div>
                   </div>
                 );
               }}
@@ -194,15 +201,15 @@ export default function SectorView() {
             <img
               src={data.map_image_url}
               alt={`${data.name} sector map`}
-              className="max-w-3xl rounded border bg-white"
+              className="w-full bg-surface"
             />
           )}
         </div>
       )}
 
-      <h2 className="mt-6 text-lg font-medium">Sites</h2>
+      <h2 className="mt-6 text-base font-semibold">Sites</h2>
       {data.sites.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-ink-2">
           No site detail yet. Run scraper without <code>--no-sites</code> to populate.
         </p>
       ) : (
@@ -210,9 +217,14 @@ export default function SectorView() {
           {data.sites.map((s) => {
             const photo = firstPhoto(s);
             return (
-              <li key={s.id} className="overflow-hidden rounded border bg-white shadow-sm">
+              <li
+                key={s.id}
+                className={`overflow-hidden rounded-md border border-rule bg-surface ${
+                  s.waterfront ? "border-l-2 border-l-lake" : ""
+                }`}
+              >
                 <Link to={`/site/${s.id}`} className="block">
-                  <div className="aspect-[4/3] bg-slate-100">
+                  <div className="aspect-[4/3] bg-surface-2">
                     {photo ? (
                       <img
                         src={photo}
@@ -221,7 +233,7 @@ export default function SectorView() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-slate-400">
+                      <div className="flex h-full items-center justify-center text-xs text-ink-3">
                         no photo
                       </div>
                     )}
@@ -229,10 +241,13 @@ export default function SectorView() {
                   <div className="p-2">
                     <div className="text-sm font-medium">{s.name ?? `#${s.number}`}</div>
                     {s.subtitle && (
-                      <div className="text-xs text-slate-500">{s.subtitle}</div>
+                      <div className="text-xs text-ink-2">{s.subtitle}</div>
                     )}
                     {s.waterfront && (
-                      <div className="mt-1 text-xs text-cyan-700">💧 waterfront</div>
+                      <div className="mt-1 flex items-center gap-1 text-xs text-lake">
+                        <AmenityIcon amenityKey="waterfront" />
+                        waterfront
+                      </div>
                     )}
                   </div>
                 </Link>

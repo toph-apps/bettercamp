@@ -8,6 +8,13 @@ import { createRoot, type Root } from "react-dom/client";
 // OpenFreeMap: fully free OSM vector tiles, no signup or key required.
 const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
+/** Marker fill: lake accent for waterfront establishments, moss otherwise. No
+ * legend on the map itself, so we skip the drive-time ramp here — it stays
+ * legible on DriveTimeChip because the minute value sits right next to it. */
+function markerColor(e: EstablishmentMarker): string {
+  return e.waterfront_count > 0 ? "var(--lake)" : "var(--moss)";
+}
+
 export default function Map({
   establishments,
 }: {
@@ -48,9 +55,8 @@ export default function Map({
     for (const e of establishments) {
       const el = document.createElement("div");
       el.className =
-        "h-4 w-4 rounded-full border-2 border-white shadow-md ring-1 ring-slate-400 cursor-pointer";
-      // Blue = has waterfront sites, green = no waterfront sites.
-      el.style.background = e.waterfront_count > 0 ? "#2563eb" : "#16a34a";
+        "h-4 w-4 rounded-full border-2 border-white shadow-md ring-1 ring-black/10 cursor-pointer";
+      el.style.background = markerColor(e);
 
       const popupEl = document.createElement("div");
       const root = createRoot(popupEl);

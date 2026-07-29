@@ -21,20 +21,20 @@ export default function MapView() {
 
   if (error)
     return (
-      <div className="p-6 text-sm text-red-700">
+      <div className="p-6 text-sm text-warn">
         Failed to load: {(error as Error).message}
       </div>
     );
   return (
-    <div className="relative h-full">
+    <div className="relative h-full bg-bg">
       <Map establishments={establishments} />
       {isLoading && (
-        <div className="absolute left-2 top-2 rounded bg-white/90 px-2 py-1 text-xs shadow">
+        <div className="absolute left-3 top-3 rounded-md border border-rule bg-surface/90 px-2.5 py-1 text-xs backdrop-blur motion-safe:animate-pulse">
           loading…
         </div>
       )}
       {data && (
-        <div className="absolute right-2 top-2 rounded bg-white/90 px-2 py-1 text-xs shadow">
+        <div className="absolute right-3 top-3 rounded-md border border-rule bg-surface/90 px-2.5 py-1 text-xs tabular-nums backdrop-blur">
           {establishments.length} establishments · {data.length} sectors
         </div>
       )}

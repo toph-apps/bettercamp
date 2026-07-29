@@ -16,7 +16,7 @@ export default function HealthBanner() {
       : "Last scrape only partially succeeded.";
 
   return (
-    <div className="border-b border-amber-200 bg-amber-50 px-4 py-1 text-xs text-amber-900">
+    <div className="border-b border-l-2 border-l-warn border-b-rule bg-warn/10 px-4 py-1 text-xs text-warn">
       {msg}
     </div>
   );
